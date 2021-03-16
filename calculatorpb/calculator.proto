@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package calculator;
+
+option go_package="calculatorpb";
+
+message Arguments {
+  int32 num_one = 1;
+  int32 num_two = 2;
+}
+
+message AddTwoNumsRequest {
+    Arguments arguments = 1;
+}
+
+message AddTwoNumsResponse {
+  int32 result = 1;
+}
+
+message PrimeNumberRequest {
+  int32 number = 1;
+}
+
+message PrimeNumberResponse {
+  int32 number = 1;
+}
+
+message AverageSumRequest {
+  double number = 1;
+}
+
+message AverageSumResponse {
+  double result = 1;
+}
+
+message FindMaximumRequest {
+  int32 number = 1;
+}
+
+message FindMaximumResponse {
+  int32 result = 1;
+}
+
+message SquareRootRequest {
+  int32 number = 1;
+}
+message SquareRootResponse {
+  double result = 1;
+}
+
+service Calculator {
+  // Unary
+  rpc AddTwoNums(AddTwoNumsRequest) returns (AddTwoNumsResponse) {};
+
+  // Error handling (throw error if number is negative)
+  rpc SquareRoot(SquareRootRequest) returns (SquareRootResponse) {};
+
+  // Server Streaming
+  rpc DecomposePrimeNumber(PrimeNumberRequest) returns (stream PrimeNumberResponse) {}
+
+  // Client Streaming
+  rpc AverageSum(stream AverageSumRequest) returns (AverageSumResponse) {}
+
+  // BiDi Streaming
+  rpc FindMaximum(stream FindMaximumRequest) returns (stream FindMaximumResponse) {};
+}
