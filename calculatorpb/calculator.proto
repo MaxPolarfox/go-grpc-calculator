@@ -48,6 +48,15 @@ message SquareRootResponse {
   double result = 1;
 }
 
+message MultiplyWithDeadlineRequest {
+  Arguments arguments = 1;
+}
+
+message MultiplyWithDeadlineResponse {
+  int32 result = 1;
+}
+
+
 service Calculator {
   // Unary
   rpc AddTwoNums(AddTwoNumsRequest) returns (AddTwoNumsResponse) {};
@@ -63,4 +72,7 @@ service Calculator {
 
   // BiDi Streaming
   rpc FindMaximum(stream FindMaximumRequest) returns (stream FindMaximumResponse) {};
+
+  // Deadline
+  rpc MultiplyWithDeadline(MultiplyWithDeadlineRequest) returns (MultiplyWithDeadlineResponse) {};
 }

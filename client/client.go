@@ -6,9 +6,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"styding/grpc-go-calculator/calculatorpb"
 	"io"
 	"log"
+	"styding/grpc-go-calculator/calculatorpb"
 	"time"
 )
 
@@ -24,13 +24,17 @@ func main() {
 
 	//doUnary(c)
 	//doServerStreaming(c)
-	doClientSteaming(c)
+	//doClientSteaming(c)
 	//doBiDiSteaming(c)
 	//doErrorHandling(c, -81)
+
+	doUnaryWithDeadline(c, 5*time.Second) // should complete
+	doUnaryWithDeadline(c, 1*time.Second) // should timeout
+
 }
 
 // doUnary sends single request to the server and receives just one response
-func doUnary(c calculatorpb.CalculatorClient)  {
+func doUnary(c calculatorpb.CalculatorClient) {
 	fmt.Println("Started to do Unary RPC...")
 	req := &calculatorpb.AddTwoNumsRequest{
 		Arguments: &calculatorpb.Arguments{
@@ -48,7 +52,7 @@ func doUnary(c calculatorpb.CalculatorClient)  {
 }
 
 // doServerStreaming sends single request to the server and receives multiple responses
-func doServerStreaming (c calculatorpb.CalculatorClient) {
+func doServerStreaming(c calculatorpb.CalculatorClient) {
 	fmt.Println("Started to do Server Streaming RPC...")
 
 	req := &calculatorpb.PrimeNumberRequest{Number: 120}
@@ -74,7 +78,7 @@ func doServerStreaming (c calculatorpb.CalculatorClient) {
 }
 
 // doClientSteaming sends multiple requests to the server and receives a single response
-func doClientSteaming(c calculatorpb.CalculatorClient)  {
+func doClientSteaming(c calculatorpb.CalculatorClient) {
 	log.Println("Starting to doClientSteaming RPC...")
 
 	stream, err := c.AverageSum(context.Background())
@@ -117,7 +121,7 @@ func doClientSteaming(c calculatorpb.CalculatorClient)  {
 }
 
 // doBiDiSteaming sends multiple requests to the server and receives multiple responses (using goroutine)
-func doBiDiSteaming(c calculatorpb.CalculatorClient)  {
+func doBiDiSteaming(c calculatorpb.CalculatorClient) {
 	fmt.Println("Started to do BiDi Steaming RPC...")
 
 	// create stream
@@ -166,7 +170,7 @@ func doBiDiSteaming(c calculatorpb.CalculatorClient)  {
 }
 
 // doErrorHandling shows a good practice for error handling
-func doErrorHandling(c calculatorpb.CalculatorClient, number int32)  {
+func doErrorHandling(c calculatorpb.CalculatorClient, number int32) {
 	fmt.Println("Started to do doErrorHandling RPC...")
 
 	res, err := c.SquareRoot(context.Background(), &calculatorpb.SquareRootRequest{Number: number})
@@ -182,4 +186,31 @@ func doErrorHandling(c calculatorpb.CalculatorClient, number int32)  {
 	}
 
 	fmt.Printf("Response of square root of %d: %f", number, res.GetResult())
+}
+
+func doUnaryWithDeadline(c calculatorpb.CalculatorClient, timeout time.Duration) {
+	fmt.Println("Started to do Unary With Deadline RPC...")
+
+	req := &calculatorpb.MultiplyWithDeadlineRequest{
+		Arguments: &calculatorpb.Arguments{NumOne: 21, NumTwo: 99},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	res, err := c.MultiplyWithDeadline(ctx, req)
+	if err != nil {
+		if statusErr, ok := status.FromError(err); ok {
+			if statusErr.Code() == codes.DeadlineExceeded {
+				fmt.Println("Timeout was hit! Deadline was exceeded")
+			} else {
+				log.Fatalf("unexpected err: %v", statusErr)
+			}
+		} else {
+			log.Fatalf("Error while calling MultiplyWithDeadline RPC: %v", err)
+		}
+		return
+	}
+
+	fmt.Printf("Response from MultiplyWithDeadlineRequest with timeout %v: %v\n", timeout, res.Result)
 }

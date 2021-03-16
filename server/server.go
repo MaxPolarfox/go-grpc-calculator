@@ -6,14 +6,15 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"styding/grpc-go-calculator/calculatorpb"
 	"io"
 	"log"
 	"math"
 	"net"
+	"styding/grpc-go-calculator/calculatorpb"
+	"time"
 )
 
-type service struct {}
+type service struct{}
 
 func (s *service) AddTwoNums(ctx context.Context, request *calculatorpb.AddTwoNumsRequest) (
 	*calculatorpb.AddTwoNumsResponse, error) {
@@ -32,7 +33,7 @@ func (s *service) DecomposePrimeNumber(req *calculatorpb.PrimeNumberRequest,
 	var k int32 = 2
 
 	for N > 1 {
-		if N % k == 0 {
+		if N%k == 0 {
 
 			result := &calculatorpb.PrimeNumberResponse{Number: N}
 
@@ -70,7 +71,7 @@ func (s *service) AverageSum(stream calculatorpb.Calculator_AverageSumServer) er
 }
 
 func (s *service) SquareRoot(ctx context.Context, req *calculatorpb.SquareRootRequest) (
-	*calculatorpb.SquareRootResponse, error)  {
+	*calculatorpb.SquareRootResponse, error) {
 	fmt.Printf("SquareRoot function was invoked with %v", req)
 
 	number := req.GetNumber()
@@ -85,7 +86,7 @@ func (s *service) SquareRoot(ctx context.Context, req *calculatorpb.SquareRootRe
 	}, nil
 }
 
-func (s *service) FindMaximum(stream calculatorpb.Calculator_FindMaximumServer) error  {
+func (s *service) FindMaximum(stream calculatorpb.Calculator_FindMaximumServer) error {
 	fmt.Println("FindMaximum function was invoked")
 
 	var max int32 = math.MinInt32
@@ -113,6 +114,27 @@ func (s *service) FindMaximum(stream calculatorpb.Calculator_FindMaximumServer) 
 	}
 
 	return nil
+}
+
+func (s *service) MultiplyWithDeadline(ctx context.Context, req *calculatorpb.MultiplyWithDeadlineRequest) (
+	*calculatorpb.MultiplyWithDeadlineResponse, error) {
+	fmt.Printf("MultiplyWithDeadline function was invoked with %v\n", req)
+
+	for i := 0; i < 3; i++ {
+		// the client cancelled the request
+		if ctx.Err() == context.Canceled {
+			fmt.Println("The client cancelled request")
+			return nil, status.Error(codes.Canceled, "the client cancelled request")
+		}
+		time.Sleep(1 * time.Second)
+	}
+
+	numOne := req.GetArguments().GetNumOne()
+	numTwo := req.GetArguments().GetNumTwo()
+
+	res := &calculatorpb.MultiplyWithDeadlineResponse{Result: numOne * numTwo}
+
+	return res, nil
 }
 
 func main() {
